@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daybook</title>
+<meta name="description" content="A compact personal journal with categories, search and a life calendar. Works offline and syncs between your devices.">
+<meta name="theme-color" content="#0f1218" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f6f9" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daybook">
+<style>
+/* page base (the prototype was published with these from the host) */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+</style>
+</head>
+<body>
+<!-- MAIN HEADER (shown on the three bottom tabs) -->
+<header class="top" id="mainTop"><div class="wrap">
+    <div class="brand">Daybook<span class="dot">.</span></div>
+    <button class="icon-btn" id="syncBtn" aria-label="Sync now" title="Sync now">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></svg>
+    </button>
+    <button class="icon-btn" id="openSettings" aria-label="Settings" title="Settings" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- JOURNAL TAB -->
+<section id="v-home">
+  <div class="wrap">
+    <h1 class="page-h">Journal</h1>
+    <div class="tools">
+      <div class="search-row">
+        <label class="search" for="q">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Search keywords, e.g. blood pressure" autocomplete="off">
+          <button class="clear" id="qClear" hidden>Clear</button>
+        </label>
+        <button class="icon-btn tall" id="dateBtn" title="Filter by date" aria-label="Filter by date" aria-pressed="false" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+        </button>
+      </div>
+      <div class="cal" id="calPop" hidden>
+        <div class="cal-head"><button id="calPrev" aria-label="Previous month">‹</button><button class="cal-t" id="calTitle" aria-label="Choose month or year"></button><button id="calNext" aria-label="Next month">›</button></div>
+        <div class="cal-wd" id="calWd"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+        <div class="cal-days" id="calDays"></div>
+        <div class="cal-foot"><span id="calHint">Tap a day, or drag across days</span><button class="ghost sm" id="calToday">Today</button></div>
+      </div>
+      <div class="day-bar" id="tagBar" hidden><span class="grow" id="tagLabel"></span><button id="tagClear" aria-label="Clear tag filter" title="Clear tag filter">✕</button></div>
+      <div class="day-bar" id="dayBar" hidden><button id="dayPrev" aria-label="Previous day">‹</button><span class="grow" id="dayLabel"></span><button id="dayNext" aria-label="Next day">›</button><button id="dayClear" aria-label="Show all dates" title="Show all dates">✕</button></div>
+      <div class="chips" id="chips" role="toolbar" aria-label="Filter by category"></div>
+      <div class="status-line"><span id="countLine"></span></div>
+    </div>
+    <div class="feed">
+      <div id="draftSlot"></div>
+      <div id="list"></div>
+    </div>
+    <div class="pad-bottom"></div>
+  </div>
+  <button class="fab" id="newBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New entry</button>
+</section>
+
+<!-- EDITOR -->
+<section id="v-edit" hidden>
+  <header class="top"><div class="wrap">
+    <button class="ghost" id="edBack"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+    <span class="title-sm" id="edHead">New entry</span>
+    <button class="btn primary" id="edSave">Save</button>
+  </div></header>
+  <div class="wrap editor">
+    <div class="field-row"><input type="date" id="edDate" aria-label="Date"><span style="flex:1"></span><div class="tpl-wrap"><button class="icon-btn sm" id="tplMore" aria-label="Template options" title="Template options" aria-expanded="false">⋯</button><div class="tpl-menu" id="tplMenu" hidden><button id="tplInsert">Insert template</button><button id="tplEdit">Edit template</button></div></div></div>
+    <div class="chips cat-pick" id="edCats" role="radiogroup" aria-label="Category"></div>
+    <input class="ed-title" id="edTitle" placeholder="Title" maxlength="120">
+    <textarea class="ed-body" id="edBody" placeholder="What happened today?"></textarea>
+    <input class="ed-tags" id="edTags" placeholder="Tags, separated by commas (optional)">
+    <div class="ed-foot"><span><span id="edCount">0 words</span> <span id="edDraft"></span></span><span class="row" style="gap:6px"><button class="ghost sm" id="edDiscard" hidden>Discard draft</button><button class="btn danger" id="edDelete" hidden>Delete entry</button></span></div>
+    <div class="confirm" id="delConfirm" hidden><span class="grow sub" style="flex:1">Delete this entry? This can't be undone.</span><button class="btn" id="delNo">Cancel</button><button class="btn danger" id="delYes">Delete</button></div>
+  </div>
+</section>
+
+<!-- LIFE CALENDAR TAB -->
+<section id="v-life" hidden>
+  <div class="wrap life-wrap">
+    <h1 class="page-h">Life calendar</h1>
+    <div class="box life-empty" id="lifeEmpty" hidden>
+      <div class="strong">See your life in weeks</div>
+      <div class="sub">Add your birth date. It stays private and you can change it later in Settings.</div>
+      <div class="row"><input type="date" id="lifeBirthNew" aria-label="Birth date"><button class="btn primary" id="lifeBirthSave">Save</button></div>
+    </div>
+    <div class="life-stats" id="lfStats"></div>
+    <div class="lgrid" id="lifeGrid" aria-label="Each row is one year of your life, each square one week; month labels on top"></div>
+    <div class="tg tg-wk"><button class="tg-h" data-tg="wk" aria-expanded="true" aria-controls="wkDetail"><span class="tg-t">Week journal</span><span class="tg-n" id="wkN"></span><svg class="tg-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="tg-b" id="wkDetail"></div></div>
+    <div class="tg tg-ms"><button class="tg-h" data-tg="ms" aria-expanded="true" aria-controls="msList"><span class="tg-t">Milestones</span><span class="tg-n" id="msN"></span><svg class="tg-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="tg-b" id="msList"></div></div>
+    <div class="pad-bottom"></div>
+  </div>
+  <button class="fab" id="msAddTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New milestone</button>
+</section>
+
+<!-- SETTINGS -->
+<section id="v-settings" hidden>
+  <div class="wrap">
+    <h1 class="page-h">Settings</h1>
+    <div class="sec"><h2>Sync</h2>
+      <div class="box" id="syncBox"></div>
+    </div>
+
+    <div class="sec" id="devSec" hidden><h2>Devices</h2><div class="list" id="devices"></div></div>
+
+    <div class="sec"><h2>Life calendar</h2>
+      <div class="list">
+        <div class="li"><label class="grow strong" for="lfBirth">Birth date</label><input type="date" id="lfBirth" class="set-inp" disabled><button class="pen" data-pen="lfBirth" aria-label="Edit birth date" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></div>
+        <div class="li"><label class="grow" for="lfYears"><span class="strong" style="display:block">Life expectancy</span><span class="sub">Years shown in the life calendar</span></label><span class="row" style="gap:6px"><input type="number" id="lfYears" class="set-inp" inputmode="numeric" min="1" max="120" step="1" style="width:64px;text-align:right" disabled><span class="sub">years</span></span><button class="pen" data-pen="lfYears" aria-label="Edit life expectancy" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></div>
+      </div>
+    </div>
+
+    <div class="sec"><h2>Data</h2>
+      <div class="list">
+        <button class="li" id="expCsv"><div class="grow"><div class="strong">Export CSV</div><div class="sub" id="csvSub"></div></div><span class="chev">›</span></button>
+        <button class="li" id="expJson"><div class="grow"><div class="strong">Backup (JSON)</div><div class="sub" id="bkSub">Never backed up</div></div><span class="chev">›</span></button>
+        <label class="li" for="restoreFile" style="cursor:pointer"><div class="grow"><div class="strong">Restore from backup</div><div class="sub">Choose a backup .json file</div></div><span class="chev">›</span></label>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint">Back up once a month and keep the file in Google Drive.</p>
+    </div>
+
+    <div class="sec" style="margin-bottom:40px"><h2>About</h2>
+      <div class="box sub" id="aboutBox">Daybook · version 1.0 · Works offline. Entries are saved on this device first, then synced to your account.</div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="bnav" id="bnav" aria-label="Sections"><div class="in" role="tablist">
+  <div class="side-brand side-only"><span class="brand">Daybook<span class="dot">.</span></span></div>
+  <button role="tab" data-nav="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 8h6M9 11.5h4"/></svg>Journal</button>
+  <button role="tab" data-nav="life" aria-selected="false"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3.5" y="3.5" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="3.5" width="4.5" height="4.5" rx="1"/><rect x="16" y="3.5" width="4.5" height="4.5" rx="1"/><rect x="3.5" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="9.75" y="9.75" width="4.5" height="4.5" rx="1"/><rect x="16" y="9.75" width="4.5" height="4.5" rx="1" opacity=".35"/><rect x="3.5" y="16" width="4.5" height="4.5" rx="1" opacity=".35"/><rect x="9.75" y="16" width="4.5" height="4.5" rx="1" opacity=".35"/><rect x="16" y="16" width="4.5" height="4.5" rx="1" opacity=".35"/></svg>Life calendar</button>
+</div></nav>
+
+<div class="scrim" id="catModal" hidden><form class="sheet" id="catForm" style="overflow:auto">
+  <div class="row"><div class="grow strong" id="cmTitle">New category</div><button type="button" class="x" id="cmClose">Close</button></div>
+  <div id="cmNew">
+    <label class="lbl" for="cmName">Name</label><input id="cmName" class="inp" maxlength="24" placeholder="e.g. Travel" autocomplete="off">
+    <div class="lbl" style="margin-top:6px">Color</div><div class="swatches" id="cmColors" role="radiogroup" aria-label="Color"></div>
+  </div>
+  <label class="lbl" for="cmTpl">Template <span class="sub" style="font-weight:400">· pre-fills every new entry in this category (optional)</span></label>
+  <textarea id="cmTpl" placeholder="Where:&#10;With:&#10;Highlights:"></textarea>
+  <div class="sub" id="cmTip">Tip: hold a category (or right-click on a laptop) to rename, archive or delete it.</div>
+  <div class="sub" id="cmInfo" hidden></div>
+  <div class="row"><button type="button" class="btn danger" id="cmDel" hidden>Delete</button><button type="button" class="btn" id="cmArch" hidden>Archive</button><span style="flex:1"></span><button class="btn primary" type="submit" id="cmSave">Add category</button></div>
+</form></div>
+<div class="scrim" id="msModal" hidden><form class="sheet" id="msForm" style="overflow:auto">
+  <div class="row"><div class="grow strong" id="msHead">New milestone</div><button type="button" class="x" id="msClose">Close</button></div>
+  <label class="lbl" for="msTitle">What happened</label><input id="msTitle" class="inp" maxlength="80" placeholder="e.g. Started my first job" autocomplete="off">
+  <label class="lbl" for="msDate">Date</label><input type="date" id="msDate" class="inp" style="font-family:var(--f-mono)">
+  <div class="sub" id="msAge"></div>
+  <div class="lbl">Type</div><div class="chips cat-pick" id="msTypes" role="radiogroup" aria-label="Milestone type" style="flex-wrap:wrap"></div>
+  <label class="lbl" for="msNote">Note (optional)</label><textarea id="msNote" placeholder="Company, place, people, how it felt…"></textarea>
+  <div class="row"><button type="button" class="btn danger" id="msDel" hidden>Delete</button><span style="flex:1"></span><button class="btn primary" type="submit">Save milestone</button></div>
+</form></div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
