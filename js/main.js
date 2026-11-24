@@ -1,7 +1,7 @@
 // Daybook: compact personal journal. Plain JavaScript, no framework.
 import { loadState, saveState, clearState, askPersistent } from './store.js';
 import { emptyDirty, emptyTomb, isDirty, syncNow, touch, removeRecord, touchProfile } from './sync-core.js';
-import { configured, currentUser, signIn, signOutUser, backend } from './firebase.js';
+import { configured, currentUser, signIn, signUp, resetPassword, signOutUser, backend } from './firebase.js';
 
 /* ---------- constants ---------- */
 const PALETTE = ['--c-work','--c-health','--c-personal','--c-ideas','--c-finance','--c-family','--c-red','--c-orange','--c-yellow','--c-lime','--c-mint','--c-cyan','--c-sky','--c-indigo','--c-violet','--c-rose','--c-brown','--c-olive','--c-slate'];
@@ -50,7 +50,7 @@ function deviceInfo() {
   return { id, kind, name: standalone ? `App on ${os}` : `${br} on ${os}` };
 }
 let DEVICE = deviceInfo();
-const ui = { devices: [], syncing: false, syncErr: null, signingIn: false, confirmSignout: false };
+const ui = { devices: [], syncing: false, syncErr: null, signingIn: false, confirmSignout: false, authMode: 'signin', authEmail: '', authErr: '' };
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -385,8 +385,19 @@ function renderSyncBox() {
   const sy = S.sync, box = $('syncBox');
   if (!configured) { box.innerHTML = '<div class="strong">Sync is not set up</div><div class="sub">Your journal is saved on this device only.</div>'; return; }
   if (!sy.uid) {
-    box.innerHTML = `<div class="row"><div class="grow"><div class="strong">Not signed in</div><div class="sub">Your journal is saved on this device only. Sign in to sync it between your phone and laptop.</div></div></div>
-      <div style="margin-top:12px"><button class="btn primary" id="signInBtn" ${ui.signingIn ? 'disabled' : ''}>${ui.signingIn ? 'Signing in…' : 'Sign in with Google'}</button></div>`;
+    const up = ui.authMode === 'signup';
+    box.innerHTML = `<div class="strong">${up ? 'Create an account' : 'Sign in to sync'}</div>
+      <div class="sub">${up ? 'Use the same email and password on your phone and laptop.' : 'Your journal is saved on this device only until you sign in.'}</div>
+      <form class="auth" id="authForm" novalidate>
+        <label class="lbl" for="authEmail">Email</label>
+        <input class="inp" id="authEmail" type="email" autocomplete="email" inputmode="email" required value="${esc(ui.authEmail)}" placeholder="you@example.com">
+        <label class="lbl" for="authPass">Password</label>
+        <div class="pw"><input class="inp" id="authPass" type="password" autocomplete="${up ? 'new-password' : 'current-password'}" required minlength="6" placeholder="${up ? 'At least 6 characters' : ''}"><button type="button" class="ghost sm" id="authShow" aria-label="Show password">Show</button></div>
+        ${ui.authErr ? `<div class="sub acct-err" role="alert">${esc(ui.authErr)}</div>` : ''}
+        <button class="btn primary" type="submit" ${ui.signingIn ? 'disabled' : ''}>${ui.signingIn ? (up ? 'Creating account…' : 'Signing in…') : (up ? 'Create account' : 'Sign in')}</button>
+        <div class="auth-links">${up ? '<span class="sub">Already have an account?</span><button type="button" class="ghost sm" id="toSignin">Sign in</button>'
+          : '<button type="button" class="ghost sm" id="authReset">Forgot password?</button><button type="button" class="ghost sm" id="toSignup">Create account</button>'}</div>
+      </form>`;
     return;
   }
   const status = ui.syncing ? 'Syncing…' : ui.syncErr ? `<span class="acct-err">${esc(ui.syncErr)}</span>` : sy.lastSync ? `Synced ${ago(sy.lastSync)}` : 'Not synced yet';
@@ -420,13 +431,45 @@ $('syncBox').addEventListener('click', e => {
     if (isDirty(S)) { toast("Couldn't sync your latest changes. Connect to the internet, then sign out again."); return; }
     await localSignOut('Signed out');
   })();
-  if (id === 'signInBtn') (async () => {
-    ui.signingIn = true; renderSettings();
-    try { const u = await signIn(); if (u) { S.sync.uid = u.uid; S.sync.email = u.email; await flush(); ui.signingIn = false; await doSync(false); } }
-    catch (err) { console.error(err); toast(err && err.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled' : err && err.code === 'auth/popup-blocked' ? 'The sign-in window was blocked. Allow pop-ups for this site, then try again.' : err && err.code === 'auth/unauthorized-domain' ? 'This web address is not allowed to sign in yet. Add it under Firebase → Authentication → Settings → Authorized domains.' : "Sign-in didn't work. Try again."); }
-    ui.signingIn = false; renderSettings();
+  if (id === 'toSignup' || id === 'toSignin') { ui.authEmail = $('authEmail').value.trim(); ui.authMode = id === 'toSignup' ? 'signup' : 'signin'; ui.authErr = ''; renderSettings(); $('authEmail').focus(); }
+  if (id === 'authShow') { const pw = $('authPass'), show = pw.type === 'password'; pw.type = show ? 'text' : 'password'; $('authShow').textContent = show ? 'Hide' : 'Show'; }
+  if (id === 'authReset') (async () => {
+    const email = $('authEmail').value.trim(); ui.authEmail = email;
+    if (!EMAIL_RE.test(email)) { ui.authErr = 'Enter your email above, then tap Forgot password again.'; renderSettings(); $('authEmail').focus(); return; }
+    try { await resetPassword(email); ui.authErr = ''; renderSettings(); toast(`If ${email} has an account, a reset link is on its way. Check the spam folder too.`); }
+    catch (err) { console.error(err); ui.authErr = authMsg(err); renderSettings(); }
   })();
 });
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+function authMsg(e) {
+  const c = (e && e.code) || '';
+  if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-login-credentials') return 'The email or password is wrong. Try again, or use Forgot password.';
+  if (c === 'auth/email-already-in-use') return 'An account with this email already exists. Sign in instead.';
+  if (c === 'auth/weak-password') return 'Use a password with at least 6 characters.';
+  if (c === 'auth/invalid-email') return 'Enter a valid email address.';
+  if (c === 'auth/missing-password') return 'Enter your password.';
+  if (c === 'auth/too-many-requests') return 'Too many attempts. Wait a few minutes, or reset your password.';
+  if (c === 'auth/operation-not-allowed') return 'Email sign-in is not turned on yet. In Firebase, enable Authentication → Sign-in method → Email/Password.';
+  if (c === 'auth/network-request-failed' || !navigator.onLine) return "Couldn't reach the server. Check your internet connection.";
+  return 'Sign-in did not work. Try again in a moment.';
+}
+$('syncBox').addEventListener('submit', e => {
+  if (e.target.id !== 'authForm') return; e.preventDefault();
+  const email = $('authEmail').value.trim(), pw = $('authPass').value, up = ui.authMode === 'signup'; ui.authEmail = email;
+  if (!EMAIL_RE.test(email)) { ui.authErr = 'Enter a valid email address.'; renderSettings(); $('authEmail').focus(); return; }
+  if (pw.length < 6) { ui.authErr = up ? 'Use a password with at least 6 characters.' : 'Enter your password.'; renderSettings(); $('authPass').focus(); return; }
+  (async () => {
+    ui.signingIn = true; ui.authErr = ''; renderSettings();
+    try {
+      const u = up ? await signUp(email, pw) : await signIn(email, pw);
+      S.sync.uid = u.uid; S.sync.email = u.email; ui.authMode = 'signin'; await flush(); ui.signingIn = false;
+      toast(up ? 'Account created. Your journal now syncs.' : 'Signed in'); await doSync(true);
+    } catch (err) { console.error(err); ui.authErr = authMsg(err); }
+    ui.signingIn = false; renderSettings();
+    if (ui.authErr && $('authPass')) $('authPass').focus();
+  })();
+});
+
 $('devices').addEventListener('click', async e => {
   const b = e.target.closest('[data-rmdev]'); if (!b) return; const id = b.dataset.rmdev;
   if (devArm !== id) { devArm = id; renderSettings(); return; }

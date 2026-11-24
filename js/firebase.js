@@ -23,29 +23,30 @@ async function fb() {
 
 const userInfo = u => (u ? { uid: u.uid, email: u.email || u.displayName || 'Signed in' } : null);
 
-// Resolves the signed-in user (also finishes a pending redirect sign-in).
+// Resolves the signed-in user, if any.
 export async function currentUser() {
   if (!configured) return null;
   const m = await fb();
-  try { await m.auth.getRedirectResult(m.a); } catch (e) { /* no redirect pending */ }
   await m.a.authStateReady();
   return userInfo(m.a.currentUser);
 }
 
-export async function signIn() {
+// Email + password accounts (enable "Email/Password" in Firebase → Authentication → Sign-in method).
+export async function signIn(email, password) {
   const m = await fb();
-  const provider = new m.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  try {
-    const r = await m.auth.signInWithPopup(m.a, provider);
-    return userInfo(r.user);
-  } catch (e) {
-    if (e && e.code === 'auth/operation-not-supported-in-this-environment') {
-      await m.auth.signInWithRedirect(m.a, provider);
-      return null;
-    }
-    throw e;
-  }
+  const r = await m.auth.signInWithEmailAndPassword(m.a, email, password);
+  return userInfo(r.user);
+}
+
+export async function signUp(email, password) {
+  const m = await fb();
+  const r = await m.auth.createUserWithEmailAndPassword(m.a, email, password);
+  return userInfo(r.user);
+}
+
+export async function resetPassword(email) {
+  const m = await fb();
+  await m.auth.sendPasswordResetEmail(m.a, email);
 }
 
 export async function signOutUser() {

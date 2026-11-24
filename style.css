@@ -376,3 +376,13 @@ body.in-edit .bnav{display:none}
 .acct-err{color:var(--danger)}
 @media (min-width:900px){.life-wrap .life-empty{grid-column:1/-1}}
 
+
+/* email + password sign-in */
+.auth{display:grid;gap:6px;margin-top:12px}
+.auth .btn.primary{margin-top:8px;justify-self:start;padding:9px 20px}
+.auth .inp{font-size:15px}
+.pw{position:relative}
+.pw .inp{padding-right:64px}
+.pw .ghost{position:absolute;right:4px;top:50%;transform:translateY(-50%)}
+.auth-links{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px}
+.auth-links .ghost{padding-left:0;padding-right:0}
