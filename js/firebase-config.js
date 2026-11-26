@@ -2,10 +2,13 @@
 // These values are not secret: they identify the project. Your data is protected by firestore.rules,
 // which only lets each signed-in account read and write its own journal.
 export const firebaseConfig = {
-  apiKey: 'AIzaSyCWP4ZPEfKoum4KkRImAjvJ1BTgFN7MWzA',
-  authDomain: 'journal-836d7.firebaseapp.com',
-  projectId: 'journal-836d7',
-  storageBucket: 'journal-836d7.firebasestorage.app',
-  messagingSenderId: '595679980861',
-  appId: '1:595679980861:web:d382f6fa63c37ba4ffe954'
-};
+  apiKey: "AIzaSyAe0oPMWQmkbs_yUA0edBq36ltMrxpKZX4",
+  authDomain: "journal-219d8.firebaseapp.com",
+  projectId: "journal-219d8",
+  storageBucket: "journal-219d8.firebasestorage.app",
+  messagingSenderId: "1060463187606",
+  appId: "1:1060463187606:web:e6fecdd13006e0162194b7"
+  };
+
+
+
