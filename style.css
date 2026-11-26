@@ -21,20 +21,20 @@
   --r:12px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1218; --surface:#181c25; --surface-2:#1f2430; --line:#2a303d;
-  --fg:#e8ebf2; --muted:#9aa3b5; --faint:#6c7487;
-  --accent:#8aa9ff; --accent-soft:#25304a; --danger:#f07b74; --warn-bg:#3a2c12; --warn-fg:#f0b552;
+  --bg:#000000; --surface:#121212; --surface-2:#1c1c1c; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a3a3a3; --faint:#6e6e6e;
+  --accent:#8aa9ff; --accent-soft:#1d2435; --danger:#f07b74; --warn-bg:#3a2c12; --warn-fg:#f0b552;
   --mark:#5b4a12; --mark-fg:#fff3c4;
-  --wk-future:#242a37; --wk-past:#4c5568; --wk-journal:#c9d0de;
+  --wk-future:#1f1f1f; --wk-past:#4a4a4a; --wk-journal:#d6d6d6;
   --c-work:#7c9dff; --c-health:#4cc98d; --c-personal:#e9a63d; --c-ideas:#b38cff; --c-finance:#3fc2c7; --c-family:#f07aa6;
   --c-red:#f27a7a; --c-orange:#f59e5b; --c-yellow:#e6c547; --c-lime:#a2d64b; --c-mint:#58d4b3; --c-cyan:#4cc5e5; --c-sky:#6fb0f2; --c-indigo:#9a9cff; --c-violet:#d08cf0; --c-rose:#f08aa8; --c-brown:#d0a37a; --c-olive:#c6c25e; --c-slate:#a2afc5;
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1218; --surface:#181c25; --surface-2:#1f2430; --line:#2a303d;
-  --fg:#e8ebf2; --muted:#9aa3b5; --faint:#6c7487;
-  --accent:#8aa9ff; --accent-soft:#25304a; --danger:#f07b74; --warn-bg:#3a2c12; --warn-fg:#f0b552;
+  --bg:#000000; --surface:#121212; --surface-2:#1c1c1c; --line:#2a2a2a;
+  --fg:#ededed; --muted:#a3a3a3; --faint:#6e6e6e;
+  --accent:#8aa9ff; --accent-soft:#1d2435; --danger:#f07b74; --warn-bg:#3a2c12; --warn-fg:#f0b552;
   --mark:#5b4a12; --mark-fg:#fff3c4;
-  --wk-future:#242a37; --wk-past:#4c5568; --wk-journal:#c9d0de;
+  --wk-future:#1f1f1f; --wk-past:#4a4a4a; --wk-journal:#d6d6d6;
   --c-work:#7c9dff; --c-health:#4cc98d; --c-personal:#e9a63d; --c-ideas:#b38cff; --c-finance:#3fc2c7; --c-family:#f07aa6;
   --c-red:#f27a7a; --c-orange:#f59e5b; --c-yellow:#e6c547; --c-lime:#a2d64b; --c-mint:#58d4b3; --c-cyan:#4cc5e5; --c-sky:#6fb0f2; --c-indigo:#9a9cff; --c-violet:#d08cf0; --c-rose:#f08aa8; --c-brown:#d0a37a; --c-olive:#c6c25e; --c-slate:#a2afc5;
   color-scheme:dark}
